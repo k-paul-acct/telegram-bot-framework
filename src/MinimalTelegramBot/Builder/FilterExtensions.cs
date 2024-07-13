@@ -1,12 +1,13 @@
+using MinimalTelegramBot.Handling;
 using MinimalTelegramBot.StateMachine.Abstractions;
 using Telegram.Bot.Types.Enums;
 
-namespace MinimalTelegramBot.Handling;
+namespace MinimalTelegramBot.Builder;
 
 public static class FilterExtensions
 {
-    public const string CommandArgs = "CommandArgs";
-    public const string CallbackDataArgs = "CallbackDataArgs";
+    public const string CommandArgs = "__CommandArgs__";
+    public const string CallbackDataArgs = "__CallbackDataArgs__";
 
     public static Handler FilterText(this Handler handler, Func<string, bool> filter)
     {
@@ -63,5 +64,17 @@ public static class FilterExtensions
     public static Handler FilterUpdateType(this Handler handler, Func<UpdateType, bool> filter)
     {
         return handler.Filter(ctx => filter(ctx.Update.Type));
+    }
+
+    public static TBuilder Filter<TBuilder>(this TBuilder handler, Func<BotRequestContext, ValueTask<bool>> filter)
+        where TBuilder : IHandlerBuilder
+    {
+        return handler.Filter(ctx => ctx.MessageText is not null && filter(ctx.MessageText));
+    }
+
+    // TODO:
+    public static TBuilder FilterWithFactory<TBuilder>(this TBuilder handler, Func<string, bool> filter)
+    {
+        return handler.Filter(ctx => ctx.MessageText is not null && filter(ctx.MessageText));
     }
 }

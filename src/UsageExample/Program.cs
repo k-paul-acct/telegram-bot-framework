@@ -2,8 +2,8 @@
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using MinimalTelegramBot;
+using MinimalTelegramBot.Builder;
 using MinimalTelegramBot.Extensions;
-using MinimalTelegramBot.Handling;
 using MinimalTelegramBot.Localization.Abstractions;
 using MinimalTelegramBot.Localization.Extensions;
 using MinimalTelegramBot.Pipeline;
@@ -45,9 +45,13 @@ builder.SetTokenFromConfiguration("BotToken");
 var app = builder.Build();
 
 app.UsePolling();
-//app.UseWebhook(new WebhookOptions { Url = "", });
+// app.UseWebhook(new WebhookOptions { Url = "", });
 
 app.UseCallbackAutoAnswering();
+
+var group = app.HandleGroup().Filter(x => ValueTask.FromResult(x.MessageText == "Hi!"));
+    
+group.Handle(() => Results.MessageReply("Hey there!"));
 
 app.Handle((ILocalizer localizer) =>
 {

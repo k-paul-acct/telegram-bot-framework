@@ -2,30 +2,24 @@ using IResult = MinimalTelegramBot.Results.IResult;
 
 namespace MinimalTelegramBot.Handling;
 
-public class Handler : IHandlerFilter
+public class Handler
 {
-    private readonly List<Func<BotRequestContext, bool>> _filterDelegates = [];
-    private readonly Func<BotRequestContext, Task<IResult>> _handlerDelegate;
+    public readonly Dictionary<object, object?> Metadata;
 
-    public Handler(Delegate handlerDelegate)
+    // TODO:
+    // private readonly List<Func<BotRequestContext, bool>> _filterDelegates = [];
+
+    public readonly Func<BotRequestContext, Task<IResult>> HandlerDelegate;
+
+    public Handler(Func<BotRequestContext, Task<IResult>> handlerDelegate, Dictionary<object, object?> metadata)
     {
-        _handlerDelegate = HandlerDelegateBuilder.Build(handlerDelegate);
+        HandlerDelegate = handlerDelegate;
+        Metadata = metadata;
     }
 
-    public Handler Filter(Func<BotRequestContext, bool> filterDelegate)
+    public async Task Handle(BotRequestContext context)
     {
-        _filterDelegates.Add(filterDelegate);
-        return this;
-    }
-
-    public bool CanHandle(BotRequestContext context)
-    {
-        return _filterDelegates.Count == 0 || _filterDelegates.All(x => x(context));
-    }
-
-    internal async Task Handle(BotRequestContext context)
-    {
-        var result = await _handlerDelegate(context);
+        var result = await HandlerDelegate(context);
         await result.ExecuteAsync(context);
     }
 }

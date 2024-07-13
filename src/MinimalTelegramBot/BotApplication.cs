@@ -9,10 +9,14 @@ using MinimalTelegramBot.StateMachine.Abstractions;
 
 namespace MinimalTelegramBot;
 
-public class BotApplication : IBotApplicationBuilder, IHandlerBuilder
+public class BotApplication : IBotApplicationBuilder, IHandlerDispatcher
 {
     private readonly IHandlerBuilder _handlerBuilder;
+    private readonly IHandlerDispatcher _handlerDispatcher;
     private readonly PipelineBuilder _pipelineBuilder = new();
+    private readonly List<HandlerSource> _handlerSources = [];
+    private readonly List<Func<BotRequestContext, Func<BotRequestContext, ValueTask<bool>>>> _filterFactories = [];
+
     private Func<BotRequestContext, Task>? _pipeline;
 
     internal readonly TelegramBotClient Client;
@@ -25,11 +29,15 @@ public class BotApplication : IBotApplicationBuilder, IHandlerBuilder
         Client = client;
         Options = options;
         _handlerBuilder = handlerBuilder;
+        _handlerDispatcher = new HandlerGroupBuilder(this);
 
         UseDefaultOuterPipes();
     }
 
     public IHost Host { get; }
+    public IServiceProvider ServiceProvider => Host.Services;
+    public ICollection<HandlerSource> HandlerSources => _handlerSources;
+    public ICollection<Func<BotRequestContext, Func<BotRequestContext, ValueTask<bool>>>> FilterFactories => _filterFactories;
 
     public IDictionary<string, object?> Properties => _pipelineBuilder.Properties;
 
@@ -47,7 +55,7 @@ public class BotApplication : IBotApplicationBuilder, IHandlerBuilder
 
     public Handler Handle(Delegate handlerDelegate)
     {
-        return _handlerBuilder.Handle(handlerDelegate);
+        return _handlerDispatcher.Handle(handlerDelegate);
     }
 
     public Handler Handle(Func<BotRequestContext, Task> func)
