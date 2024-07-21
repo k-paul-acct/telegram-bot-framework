@@ -16,7 +16,7 @@ public class BotRequestContext
     public State? UserState { get; set; }
     public IServiceProvider Services { get; set; } = null!;
     public IStateMachine StateMachine { get; set; } = null!;
-    public ILocalizer? Localizer { get; set; } = null!;
+    public ILocalizer? Localizer { get; set; }
     public IDictionary<string, object?> Data { get; } = new Dictionary<string, object?>();
     internal bool UpdateHandlingStarted { get; set; }
 }
