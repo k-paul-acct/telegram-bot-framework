@@ -18,7 +18,7 @@ var builder = BotApplication.CreateBuilder(new BotApplicationBuilderOptions
     ReceiverOptions = new ReceiverOptions
     {
         AllowedUpdates = [UpdateType.Message, UpdateType.CallbackQuery,],
-        ThrowPendingUpdates = true,
+        DropPendingUpdates = true,
     },
 });
 

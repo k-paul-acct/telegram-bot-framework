@@ -2,7 +2,7 @@ using Telegram.Bot;
 
 namespace MinimalTelegramBot.Services;
 
-internal class BotInitService
+internal sealed class BotInitService
 {
     private readonly TelegramBotClient _client;
     private readonly ILogger<BotApplication> _logger;

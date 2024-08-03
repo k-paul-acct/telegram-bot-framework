@@ -1,7 +1,7 @@
-using Telegram.Bot;
-using Telegram.Bot.Types;
 using MinimalTelegramBot.Localization.Abstractions;
 using MinimalTelegramBot.StateMachine.Abstractions;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace MinimalTelegramBot;
 

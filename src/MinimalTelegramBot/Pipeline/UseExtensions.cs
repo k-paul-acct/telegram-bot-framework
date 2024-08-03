@@ -4,7 +4,7 @@ public static class UseExtensions
 {
     public static IBotApplicationBuilder UseCallbackAutoAnswering(this IBotApplicationBuilder app)
     {
-        app.Properties["CallbackAutoAnsweringAdded"] = true;
+        app.Properties["__CallbackAutoAnsweringAdded"] = true;
         return app;
     }
 

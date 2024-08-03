@@ -14,6 +14,7 @@ public class InMemoryLocaleStringSetRepository : ILocaleStringSetRepository
         {
             throw new Exception($"No string with key {key} found for locale {locale}");
         }
+
         return result;
     }
 

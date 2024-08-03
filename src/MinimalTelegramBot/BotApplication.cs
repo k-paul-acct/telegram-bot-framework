@@ -1,11 +1,11 @@
 using MinimalTelegramBot.Handling;
-using Telegram.Bot;
-using Telegram.Bot.Types;
 using MinimalTelegramBot.Localization.Abstractions;
 using MinimalTelegramBot.Pipeline;
 using MinimalTelegramBot.Services;
 using MinimalTelegramBot.Settings;
 using MinimalTelegramBot.StateMachine.Abstractions;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace MinimalTelegramBot;
 
@@ -39,7 +39,7 @@ public class BotApplication : IBotApplicationBuilder, IHandlerDispatcher
     public ICollection<HandlerSource> HandlerSources => _handlerSources;
     public ICollection<Func<BotRequestContext, Func<BotRequestContext, ValueTask<bool>>>> FilterFactories => _filterFactories;
 
-    public IDictionary<string, object?> Properties => _pipelineBuilder.Properties;
+    IDictionary<string, object?> IBotApplicationBuilder.Properties => _pipelineBuilder.Properties;
 
     public IBotApplicationBuilder Use(Func<Func<BotRequestContext, Task>, Func<BotRequestContext, Task>> pipe)
     {
@@ -63,7 +63,7 @@ public class BotApplication : IBotApplicationBuilder, IHandlerDispatcher
         return _handlerBuilder.Handle(func);
     }
 
-    public Handler? TryResolveHandler(BotRequestContext ctx)
+    Handler? IHandlerBuilder.TryResolveHandler(BotRequestContext ctx)
     {
         return _handlerBuilder.TryResolveHandler(ctx);
     }
@@ -92,7 +92,7 @@ public class BotApplication : IBotApplicationBuilder, IHandlerDispatcher
 
     public void Run()
     {
-        if (Properties.ContainsKey("CallbackAutoAnsweringAdded"))
+        if (_pipelineBuilder.Properties.ContainsKey("__CallbackAutoAnsweringAdded"))
         {
             this.UsePipe<CallbackAutoAnsweringPipe>();
         }
@@ -118,19 +118,27 @@ public class BotApplication : IBotApplicationBuilder, IHandlerDispatcher
 
         var context = new BotRequestContext();
         var contextAccessor = scope.ServiceProvider.GetRequiredService<IBotRequestContextAccessor>();
+
         contextAccessor.BotRequestContext = context;
 
-        var chatId = update.Message?.Chat.Id ?? update.CallbackQuery?.Message?.Chat.Id ?? 0;
-        if (chatId == 0)
-        {
-            return;
-        }
+        var chatId = update.Message?.Chat.Id ??
+                     update.CallbackQuery?.Message?.Chat.Id ??
+                     update.EditedMessage?.Chat.Id ??
+                     update.ChannelPost?.Chat.Id ??
+                     update.EditedChannelPost?.Chat.Id ??
+                     update.MessageReaction?.Chat.Id ??
+                     update.MessageReactionCount?.Chat.Id ??
+                     update.ChatBoost?.Chat.Id ??
+                     update.RemovedChatBoost?.Chat.Id ??
+                     0;
 
         var messageText = update.Message?.Text;
         var callbackData = update.CallbackQuery?.Data;
 
         var stateMachine = scope.ServiceProvider.GetRequiredService<IStateMachine>();
-        var localeService = scope.ServiceProvider.GetService<IUserLocaleService>();
+        var state = chatId != 0 ? stateMachine.GetState(chatId) : null;
+        var localizer = scope.ServiceProvider.GetService<ILocalizer>();
+        var localeService = chatId != 0 ? scope.ServiceProvider.GetService<IUserLocaleService>() : null;
         var locale = localeService is null
             ? null
             : await localeService.GetFromRepositoryOrUpdateWithProviderAsync(chatId);
@@ -143,8 +151,8 @@ public class BotApplication : IBotApplicationBuilder, IHandlerDispatcher
         context.UserLocale = locale;
         context.Services = scope.ServiceProvider;
         context.StateMachine = stateMachine;
-        context.Localizer = scope.ServiceProvider.GetService<ILocalizer>();
-        context.UserState = stateMachine.GetState(chatId);
+        context.Localizer = localizer;
+        context.UserState = state;
 
         await _pipeline!(context);
     }
@@ -154,7 +162,6 @@ public class BotApplication : IBotApplicationBuilder, IHandlerDispatcher
         using var scope = Host.Services.CreateScope();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<BotApplication>>();
         logger.LogError(500, e, "Bot error: {Error}", e.Message);
-
         return Task.CompletedTask;
     }
 

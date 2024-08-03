@@ -2,7 +2,7 @@ using Telegram.Bot.Polling;
 
 namespace MinimalTelegramBot.Settings;
 
-internal class BotApplicationOptions
+internal sealed class BotApplicationOptions
 {
     public BotApplicationOptions(BotApplicationBuilderOptions builderOptions)
     {

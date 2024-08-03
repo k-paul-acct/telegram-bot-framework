@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using MinimalTelegramBot.Localization.Abstractions;
 using MinimalTelegramBot.Results;
 using MinimalTelegramBot.StateMachine.Abstractions;
 using Telegram.Bot;
@@ -16,8 +17,6 @@ internal static class HandlerDelegateBuilder
         var parameters = d.Method.GetParameters();
         var delegateConstant = Expression.Constant(d);
         var contextParameter = Expression.Parameter(typeof(BotRequestContext), "context");
-        var servicesProperty = Expression.Property(contextParameter, nameof(BotRequestContext.Services));
-        var getServiceMethod = typeof(IServiceProvider).GetMethod(nameof(IServiceProvider.GetService))!;
         var argumentsExp = parameters.Select<ParameterInfo, Expression>(x =>
         {
             if (x.ParameterType == typeof(BotRequestContext))
@@ -35,6 +34,39 @@ internal static class HandlerDelegateBuilder
                 return Expression.Property(contextParameter, nameof(BotRequestContext.CallbackData));
             }
 
+            var genericCallbackModel = typeof(ICallbackDataParser<>).MakeGenericType(x.ParameterType);
+
+            if (x.ParameterType.IsAssignableTo(genericCallbackModel))
+            {
+                var callbackExp = Expression.Property(contextParameter, nameof(BotRequestContext.CallbackData));
+                return Expression.Call(null, x.ParameterType.GetMethod(nameof(ICallbackDataParser<object>.Parse))!, callbackExp);
+            }
+
+            var genericCommandModel = typeof(ICommandParser<>).MakeGenericType(x.ParameterType);
+
+            if (x.ParameterType.IsAssignableTo(genericCommandModel))
+            {
+                var useFormatProvider = x.GetCustomAttributes().Any(y => y is UseFormatProviderAttribute);
+                var commandExp = Expression.Property(contextParameter, nameof(BotRequestContext.MessageText));
+                var nullFormatProvider = Expression.Constant(null, typeof(IFormatProvider));
+                Expression finalFormatProvider;
+
+                if (useFormatProvider)
+                {
+                    var userLocale = Expression.Property(contextParameter, nameof(BotRequestContext.UserLocale));
+                    var cultureInfo = Expression.Property(userLocale, nameof(BotRequestContext.UserLocale.CultureInfo));
+                    var cast = Expression.Convert(cultureInfo, typeof(IFormatProvider));
+                    var nullLocale = Expression.Constant(null, typeof(Locale));
+                    finalFormatProvider = Expression.Condition(Expression.Equal(userLocale, nullLocale), nullFormatProvider, cast);
+                }
+                else
+                {
+                    finalFormatProvider = nullFormatProvider;
+                }
+
+                return Expression.Call(null, x.ParameterType.GetMethod(nameof(ICommandParser<object>.Parse))!, commandExp, finalFormatProvider);
+            }
+
             if (typeof(ITelegramBotClient).IsAssignableFrom(x.ParameterType))
             {
                 return Expression.Property(contextParameter, nameof(BotRequestContext.Client));
@@ -45,7 +77,7 @@ internal static class HandlerDelegateBuilder
                 return Expression.Property(contextParameter, nameof(BotRequestContext.Update));
             }
 
-            if (x.ParameterType == typeof(long) && x.Name is "chatId" or "userId")
+            if (x.ParameterType == typeof(long) && x.Name is "chatId" or "chatID")
             {
                 return Expression.Property(contextParameter, nameof(BotRequestContext.ChatId));
             }
@@ -55,7 +87,27 @@ internal static class HandlerDelegateBuilder
                 return Expression.Property(contextParameter, nameof(BotRequestContext.UserState));
             }
 
-            return Expression.Convert(Expression.Call(servicesProperty, getServiceMethod, Expression.Constant(x.ParameterType)), x.ParameterType);
+            var servicesProperty = Expression.Property(contextParameter, nameof(BotRequestContext.Services));
+
+            if (x.ParameterType == typeof(IKeyedServiceProvider))
+            {
+                return Expression.Convert(servicesProperty, typeof(IKeyedServiceProvider));
+            }
+
+            var getServiceMethod = typeof(IServiceProvider).GetMethod(nameof(IServiceProvider.GetService))!;
+            var getKeyedServiceMethod = typeof(IKeyedServiceProvider).GetMethod(nameof(IKeyedServiceProvider.GetKeyedService), [typeof(Type), typeof(object),])!;
+            var keyedAttribute = x.GetCustomAttributes().FirstOrDefault(y => y is FromKeyedServicesAttribute);
+            var key = ((FromKeyedServicesAttribute?)keyedAttribute)?.Key;
+
+            if (key is null)
+            {
+                return Expression.Convert(Expression.Call(servicesProperty, getServiceMethod, Expression.Constant(x.ParameterType)), x.ParameterType);
+            }
+
+            var keyExpression = Expression.Constant(key, typeof(object));
+            var castServices = Expression.Convert(servicesProperty, typeof(IKeyedServiceProvider));
+
+            return Expression.Convert(Expression.Call(castServices, getKeyedServiceMethod, Expression.Constant(x.ParameterType), keyExpression), x.ParameterType);
         });
 
         var delegateInvokeExp = Expression.Invoke(delegateConstant, argumentsExp);

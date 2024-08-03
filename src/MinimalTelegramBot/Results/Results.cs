@@ -24,7 +24,7 @@ public static class Results
 
     public static IResult CallbackAnswer()
     {
-        throw new NotImplementedException();
+        return new CallbackAnswerResult();
     }
 
     public static IResult Photo(string photoName, string? caption = null)

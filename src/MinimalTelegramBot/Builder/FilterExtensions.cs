@@ -6,9 +6,6 @@ namespace MinimalTelegramBot.Builder;
 
 public static class FilterExtensions
 {
-    public const string CommandArgs = "__CommandArgs__";
-    public const string CallbackDataArgs = "__CallbackDataArgs__";
-
     public static Handler FilterText(this Handler handler, Func<string, bool> filter)
     {
         return handler.Filter(ctx => ctx.MessageText is not null && filter(ctx.MessageText));
@@ -16,7 +13,8 @@ public static class FilterExtensions
 
     public static Handler FilterTextWithLocalizer(this Handler handler, string key)
     {
-        return handler.Filter(ctx => ctx.Localizer![ctx.UserLocale!, key] == ctx.MessageText);
+        return handler.Filter(ctx => ctx.MessageText is not null &&
+                                     ctx.Localizer![ctx.UserLocale ?? Locale.Default, key] == ctx.MessageText);
     }
 
     public static Handler FilterCommand(this Handler handler, string command)
@@ -28,10 +26,33 @@ public static class FilterExtensions
                 return false;
             }
 
-            var parts = ctx.MessageText.Split(' ');
-            ctx.Data[CommandArgs] = parts[1..];
+            var span = ctx.MessageText.AsSpan();
 
-            return parts[0] == command;
+            if (span.Length < 2 || span[0] != '/')
+            {
+                return false;
+            }
+
+            var commandEnd = 1;
+
+            foreach (var letter in span[1..])
+            {
+                var uLetter = (uint)letter;
+
+                if (uLetter - 'a' > 'z' - 'a' && uLetter - '0' > '9' - '0' && uLetter != '_')
+                {
+                    break;
+                }
+
+                commandEnd += 1;
+            }
+
+            if (commandEnd < 2)
+            {
+                return false;
+            }
+
+            return span[..commandEnd].SequenceEqual(command);
         });
     }
 
@@ -47,18 +68,12 @@ public static class FilterExtensions
 
     public static Handler FilterCallbackData(this Handler handler, Func<string, bool> filter)
     {
-        return handler.Filter(ctx =>
-        {
-            if (ctx.CallbackData is null)
-            {
-                return false;
-            }
+        return handler.Filter(ctx => ctx.CallbackData is not null && filter(ctx.CallbackData));
+    }
 
-            var parts = ctx.CallbackData.Split(' ');
-            ctx.Data[CallbackDataArgs] = parts[1..];
-
-            return filter(ctx.CallbackData);
-        });
+    public static Handler FilterUpdateType(this Handler handler, UpdateType updateType)
+    {
+        return handler.Filter(ctx => ctx.Update.Type == updateType);
     }
 
     public static Handler FilterUpdateType(this Handler handler, Func<UpdateType, bool> filter)

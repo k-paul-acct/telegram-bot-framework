@@ -9,17 +9,20 @@ namespace MinimalTelegramBot;
 
 public class BotApplicationBuilder
 {
-    private readonly BotApplicationBuilderOptions _options = new();
+    private readonly BotApplicationBuilderOptions _options;
 
     internal BotApplicationBuilder(string[]? args)
     {
-        HostBuilder = args is not null ? Host.CreateApplicationBuilder(args) : Host.CreateApplicationBuilder();
+        HostBuilder = Host.CreateApplicationBuilder(args);
+        _options = new BotApplicationBuilderOptions { Args = args, };
         AddDefaultPipeServices();
     }
 
-    internal BotApplicationBuilder(BotApplicationBuilderOptions options) : this(options.Args)
+    internal BotApplicationBuilder(BotApplicationBuilderOptions options)
     {
+        HostBuilder = Host.CreateApplicationBuilder(options.Args);
         _options = options;
+        AddDefaultPipeServices();
     }
 
     public HostApplicationBuilder HostBuilder { get; }

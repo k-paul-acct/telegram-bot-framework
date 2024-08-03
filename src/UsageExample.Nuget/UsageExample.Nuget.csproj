@@ -1,30 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <UserSecretsId>cfc2d6fb-f01f-4e73-b24d-903df47eb8eb</UserSecretsId>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>cfc2d6fb-f01f-4e73-b24d-903df47eb8eb</UserSecretsId>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <None Remove="cat.jpeg"/>
-        <Content Include="cat.jpeg">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
+  <ItemGroup>
+    <None Remove="cat.jpeg"/>
+    <Content Include="cat.jpeg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
-    <ItemGroup>
-        <None Remove="Localization\ru.yaml"/>
-        <Resource Include="Localization\ru.yaml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Resource>
-    </ItemGroup>
+  <ItemGroup>
+    <None Remove="Localization\ru.yaml"/>
+    <Resource Include="Localization\ru.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="MinimalTelegramBot" Version="0.0.3"/>
-        <PackageReference Include="MinimalTelegramBot.Localization" Version="0.0.3"/>
-        <PackageReference Include="MinimalTelegramBot.StateMachine" Version="0.0.3"/>
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MinimalTelegramBot" Version="0.0.3"/>
+    <PackageReference Include="MinimalTelegramBot.Localization" Version="0.0.3"/>
+    <PackageReference Include="MinimalTelegramBot.StateMachine" Version="0.0.3"/>
+  </ItemGroup>
 
 </Project>

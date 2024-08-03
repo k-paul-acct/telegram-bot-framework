@@ -1,19 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageId>MinimalTelegramBot.Localization.Abstractions</PackageId>
-        <Version>0.0.3</Version>
-        <Authors>Pavel Kulakov</Authors>
-        <RepositoryUrl>https://github.com/k-paul-acct/telegram-bot-framework</RepositoryUrl>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <IsPackable>true</IsPackable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>MinimalTelegramBot.Localization.Abstractions</PackageId>
+    <Version>0.0.4</Version>
+    <Authors>Pavel Kulakov</Authors>
+    <RepositoryUrl>https://github.com/k-paul-acct/minimal-telegram-bot</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>bot framework telegram tg telegram-bot TelegramBot telegram-bot-framework TelegramBotFramework</PackageTags>
+    <Description>
+      Provides localization abstractions for the Minimal Telegram Bot Framework Localization.
+    </Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
 
 </Project>

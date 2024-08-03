@@ -9,27 +9,41 @@ internal static class BotApplicationRunner
 {
     public static void Run(BotApplication app)
     {
-        ((IBotApplicationBuilder)app).Build();
-        var isWebhook = app.Properties.ContainsKey("WebhooksEnabled");
+        var appBuilder = (IBotApplicationBuilder)app;
 
-        if (isWebhook)
+        appBuilder.Build();
+
+        var isWebhook = appBuilder.Properties.ContainsKey("__WebhookEnabled");
+
+        appBuilder.Properties.TryGetValue("__DeleteWebhook", out var deleteWebhook);
+
+        if (deleteWebhook is true)
         {
-            var webApp = SetupWebhooks(app).GetAwaiter().GetResult();
-            var thread = new Thread(webApp.Run)
-            {
-                IsBackground = true,
-            };
-            
-            thread.Start();
+            DeleteWebhook(app).GetAwaiter().GetResult();
         }
-        else
+
+        var host = isWebhook ? SetupWebhooks(app).GetAwaiter().GetResult() : app.Host;
+
+        if (!isWebhook)
         {
             app.StartPolling();
         }
 
         app.InitBot(isWebhook);
 
-        app.Host.Run();
+        if (isWebhook)
+        {
+            ((WebApplication)host).Run();
+        }
+        else
+        {
+            host.Run();
+        }
+    }
+
+    private static async Task DeleteWebhook(BotApplication app)
+    {
+        await app.Client.DeleteWebhookAsync(app.Options.ReceiverOptions?.DropPendingUpdates ?? false);
     }
 
     private static async Task<WebApplication> SetupWebhooks(BotApplication app)
@@ -37,10 +51,9 @@ internal static class BotApplicationRunner
         var options = app.Options.WebhookOptions ??
                       throw new Exception("No webhook options was specified to use webhook");
 
-        // TODO: Test.
-        await Task.Delay(1);
-        /*await app.Client.SetWebhookAsync(options.Url, options.Certificate, options.IpAddress, options.MaxConnections,
-            app.Options.ReceiverOptions?.AllowedUpdates, options.DropPendingUpdates, options.SecretToken);*/
+        await app.Client.SetWebhookAsync(options.Url, options.Certificate, options.IpAddress, options.MaxConnections,
+            app.Options.ReceiverOptions?.AllowedUpdates, app.Options.ReceiverOptions?.DropPendingUpdates ?? false,
+            options.SecretToken);
 
         var webAppBuilder = WebApplication.CreateSlimBuilder(app.Options.Args ?? []);
 
@@ -48,18 +61,18 @@ internal static class BotApplicationRunner
         {
             JsonSerializerOptionsProvider.Configure(o.SerializerOptions);
         });
-        
+
         webAppBuilder.Services.AddHttpClient("tgwebhook")
             .RemoveAllLoggers()
             .AddTypedClient(httpClient => new TelegramBotClient(app.Options.Token, httpClient));
 
         var webApp = webAppBuilder.Build();
-        
+
         webApp.MapPost("/", async (Update update, TelegramBotClient bot) =>
         {
             await app.HandleUpdateInBackground(bot, update);
-            return Microsoft.AspNetCore.Http.Results.Ok();
-        });
+            return Microsoft.AspNetCore.Http.Results.StatusCode(StatusCodes.Status200OK);
+        }).AddEndpointFilter(new TelegramWebHookSecretTokenFilter(options.SecretToken));
 
         return webApp;
     }

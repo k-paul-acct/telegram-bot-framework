@@ -3,14 +3,18 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MinimalTelegramBot.Results;
 
-internal class ResultHelper
+internal sealed class ResultHelper
 {
     private static readonly Type MessageInlineKeyboardPair = typeof(ValueTuple<string, InlineKeyboardMarkup>);
     private static readonly Type MessageReplyKeyboardPair = typeof(ValueTuple<string, ReplyKeyboardMarkup>);
 
     public static Func<T, IResult> FromType<T>()
     {
-        if (typeof(T) == typeof(string)) return x => Results.Message((x as string)!);
+        if (typeof(T) == typeof(string))
+        {
+            return x => Results.Message((x as string)!);
+        }
+
         if (typeof(T) == MessageReplyKeyboardPair || typeof(T) == MessageInlineKeyboardPair)
         {
             return x =>
@@ -19,6 +23,7 @@ internal class ResultHelper
                 return Results.Message((string)t[0]!, (IReplyMarkup)t[1]!);
             };
         }
+
         return x =>
         {
             var message = x?.ToString();

@@ -1,28 +1,32 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <PackageId>MinimalTelegramBot.StateMachine</PackageId>
-        <Version>0.0.3</Version>
-        <Authors>Pavel Kulakov</Authors>
-        <RepositoryUrl>https://github.com/k-paul-acct/telegram-bot-framework</RepositoryUrl>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <IsPackable>true</IsPackable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>MinimalTelegramBot.StateMachine</PackageId>
+    <Version>0.0.4</Version>
+    <Authors>Pavel Kulakov</Authors>
+    <RepositoryUrl>https://github.com/k-paul-acct/minimal-telegram-bot</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>bot framework telegram tg telegram-bot TelegramBot telegram-bot-framework TelegramBotFramework</PackageTags>
+    <Description>
+      Provides state machine functionality for the Minimal Telegram Bot Framework.
+    </Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\MinimalTelegramBot.StateMachine.Abstractions\MinimalTelegramBot.StateMachine.Abstractions.csproj"/>
-        <ProjectReference Include="..\MinimalTelegramBot\MinimalTelegramBot.csproj"/>
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MinimalTelegramBot.StateMachine.Abstractions\MinimalTelegramBot.StateMachine.Abstractions.csproj"/>
+    <ProjectReference Include="..\MinimalTelegramBot\MinimalTelegramBot.csproj"/>
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0"/>
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0"/>
+  </ItemGroup>
 
 </Project>
